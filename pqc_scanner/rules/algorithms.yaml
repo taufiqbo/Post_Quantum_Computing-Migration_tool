@@ -1,0 +1,110 @@
+# Detection rules for the post-quantum cryptography migration scanner.
+# Each entry = one family of crypto, why it is a problem, and what to use instead.
+ 
+version: 1
+ 
+algorithms:
+ 
+  - id: RSA
+    name: RSA
+    severity: critical
+    hndl: true
+    quantum_threat: Shor's algorithm can break RSA by factoring large integers efficiently and recovering the private key.
+    replacement: Module-Lattice-Based Key-Encapsulation Mechanism (ML-KEM, FIPS 203) for key exchange and Module-Lattice-Based Digital Signature Algorithm (ML-DSA, FIPS 204) for signatures.
+    patterns:
+      - regex: 'rsa\.generate_private_key|KeyPairGenerator\.getInstance\(\s*"RSA"|rsa\.GenerateKey\(|RSA_generate_key'
+        confidence: high
+      - regex: '\bRSA\b'
+        confidence: medium
+ 
+  - id: ECC
+    name: Elliptic Curve Cryptography
+    severity: critical
+    hndl: true
+    quantum_threat: Shor's algorithm can break ECC by solving the elliptic curve discrete logarithm problem efficiently and recovering the private key.
+    replacement: Module-Lattice-Based Key-Encapsulation Mechanism (ML-KEM, FIPS 203) for key exchange and Module-Lattice-Based Digital Signature Algorithm (ML-DSA, FIPS 204) for signatures.
+    patterns:
+      - regex: 'ec\.generate_private_key|KeyPairGenerator\.getInstance\(\s*"EC"|ecdsa\.GenerateKey\(|createECDH\('
+        confidence: high
+      - regex: '\b(?:ECDSA|ECDHE?|Ed25519|X25519|secp256r1|prime256v1)\b'
+        confidence: medium
+ 
+  - id: DH
+    name: Diffie-Hellman
+    severity: critical
+    hndl: true
+    quantum_threat: Shor's algorithm solves the discrete logarithm problem behind Diffie-Hellman.
+    replacement: Module-Lattice-Based Key-Encapsulation Mechanism (ML-KEM, FIPS 203).
+    patterns:
+      - regex: 'dh\.generate_parameters|createDiffieHellman\(|diffie-hellman-group'
+        confidence: high
+ 
+  - id: DSA
+    name: Digital Signature Algorithm
+    severity: high
+    hndl: false
+    quantum_threat: Shor's algorithm breaks the discrete logarithm problem that DSA relies on.
+    replacement: ML-DSA (FIPS 204) or SLH-DSA (FIPS 205).
+    patterns:
+      - regex: 'dsa\.generate_private_key|KeyPairGenerator\.getInstance\(\s*"DSA"|withDSA'
+        confidence: high
+ 
+  - id: SHA1
+    name: SHA-1
+    severity: high
+    hndl: false
+    quantum_threat: SHA-1 is already broken by classical cryptanalysis (SHAttered collision, 2017).
+    replacement: SHA-256, SHA-384 or SHA3-256.
+    patterns:
+      - regex: 'hashlib\.sha1\(|MessageDigest\.getInstance\(\s*"SHA-?1"|createHash\(\s*[''"]sha1'
+        confidence: high
+ 
+  - id: MD5
+    name: MD5
+    severity: high
+    hndl: false
+    quantum_threat: MD5 collisions can be made in seconds on a laptop.
+    replacement: SHA-256, SHA-384 or SHA3-256.
+    patterns:
+      - regex: 'hashlib\.md5\(|MessageDigest\.getInstance\(\s*"MD5"|createHash\(\s*[''"]md5'
+        confidence: high
+ 
+  - id: 3DES
+    name: Triple DES
+    severity: medium
+    hndl: true
+    quantum_threat: 64-bit block (Sweet32 attack), and Grover's algorithm halves its strength.
+    replacement: AES-256-GCM.
+    patterns:
+      - regex: 'TripleDES|DESede|des-ede3|DES3\.new\('
+        confidence: high
+ 
+  - id: ML-KEM
+    name: ML-KEM (quantum-safe)
+    severity: info
+    quantum_safe: true
+    quantum_threat: None. This is the NIST post-quantum key exchange (FIPS 203).
+    replacement: Already quantum-safe. Keep it.
+    patterns:
+      - regex: '\b(?:ML-?KEM\w*|X25519MLKEM768|Kyber\w*)\b'
+        confidence: high
+ 
+  - id: ML-DSA
+    name: ML-DSA (quantum-safe)
+    severity: info
+    quantum_safe: true
+    quantum_threat: None. This is the NIST post-quantum signature standard (FIPS 204).
+    replacement: Already quantum-safe. Keep it.
+    patterns:
+      - regex: '\b(?:ML-?DSA(?:-?(?:44|65|87))?|MLDSA\d*|Dilithium\d*)\b'
+        confidence: high
+
+  - id: SLH-DSA
+    name: SLH-DSA (quantum-safe)
+    severity: info
+    quantum_safe: true
+    quantum_threat: None. This is the NIST hash-based signature standard (FIPS 205).
+    replacement: Already quantum-safe. Keep it.
+    patterns:
+      - regex: '\b(?:SLH-?DSA[\w-]*|SPHINCS\+?[\w-]*)'
+        confidence: high
