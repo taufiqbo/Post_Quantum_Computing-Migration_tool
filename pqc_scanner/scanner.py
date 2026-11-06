@@ -1,7 +1,10 @@
+"""Scanner #1: run the regex rules over every line of every source file."""
+
 import os
 import sys
 from pathlib import Path
 
+from .ast_scanner import scan_python
 from .models import Finding
 from .rules import load_rules
 
@@ -17,6 +20,7 @@ SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", "dist", "bu
 COMMENT_STARTS = ("#", "//", "/*", "*")
 
 SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"]
+
 
 def scan_file(path, rules, base):
     """Return a list of Findings for one file."""
@@ -47,7 +51,17 @@ def scan_file(path, rules, base):
                         quantum_safe=rule.quantum_safe,
                     ))
                     break  # one finding per rule per line is enough
+
+    # Python files get a second, smarter look with the AST scanner
+    if path.suffix == ".py":
+        ast_findings = scan_python(text, rel_path, rules)
+        if ast_findings is not None:
+            # AST results win. Keep a regex finding only if the AST didn't
+            # already report the same rule on the same line.
+            taken = {(f.line, f.rule_id) for f in ast_findings}
+            findings = ast_findings + [f for f in findings if (f.line, f.rule_id) not in taken]
     return findings
+
 
 def scan_folder(folder, rules):
     """Walk through a folder and scan every source file inside it."""
@@ -75,6 +89,8 @@ def main():
     for f in findings:
         print(f"[{f.severity.upper():8}] {f.algorithm:28} {f.file}:{f.line}  ({f.confidence})")
         print(f"           {f.snippet}")
+        if f.detail:
+            print(f"           detail: {f.detail}")
         print(f"           fix: {f.replacement}")
         print()
 

@@ -13,3 +13,4 @@ class Finding:
     confidence: str
     replacement: str
     quantum_safe: bool = False
+    detail: str = ""
