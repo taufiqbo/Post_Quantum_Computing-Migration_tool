@@ -31,6 +31,8 @@ def scan_file(path, rules, base):
     for line_number, line in enumerate(text.splitlines(), start=1):
         is_comment = line.strip().startswith(COMMENT_STARTS)
         for rule in rules:
+            if is_comment and rule.quantum_safe:
+                continue  # a comment can't prove we're quantum-safe, so skip those rules
             for pattern in rule.patterns:
                 if pattern.regex.search(line):
                     findings.append(Finding(

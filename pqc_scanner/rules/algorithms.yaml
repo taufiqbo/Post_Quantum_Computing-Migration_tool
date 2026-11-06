@@ -12,7 +12,7 @@ algorithms:
     quantum_threat: Shor's algorithm can break RSA by factoring large integers efficiently and recovering the private key.
     replacement: Module-Lattice-Based Key-Encapsulation Mechanism (ML-KEM, FIPS 203) for key exchange and Module-Lattice-Based Digital Signature Algorithm (ML-DSA, FIPS 204) for signatures.
     patterns:
-      - regex: 'rsa\.generate_private_key|KeyPairGenerator\.getInstance\(\s*"RSA"|rsa\.GenerateKey\(|RSA_generate_key'
+      - regex: 'rsa\.generate_private_key|KeyPairGenerator\.getInstance\(\s*"RSA"|rsa\.GenerateKey\(|RSA_generate_key|generateKeyPair(?:Sync)?\(\s*[''"]rsa[''"]'
         confidence: high
       - regex: '\bRSA\b'
         confidence: medium
