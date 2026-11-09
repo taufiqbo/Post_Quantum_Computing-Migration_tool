@@ -1,0 +1,22 @@
+# Tells pip how to install this project, and creates the "pqc-scan" command.
+# Install it (once, inside your venv) with:   pip install -e .
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pqc-scanner"
+version = "0.1.0"
+description = "Find quantum-vulnerable cryptography in code, configs and certificates."
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6.0", "cryptography>=43", "GitPython>=3.1"]
+
+[project.scripts]
+pqc-scan = "pqc_scanner.cli:main"
+
+[tool.setuptools]
+packages = ["pqc_scanner"]
+
+[tool.setuptools.package-data]
+pqc_scanner = ["rules/*.yaml"]

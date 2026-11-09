@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: pqc-scanner
+Version: 0.1.0
+Summary: Find quantum-vulnerable cryptography in code, configs and certificates.
+Requires-Python: >=3.10
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: cryptography>=43
+Requires-Dist: GitPython>=3.1

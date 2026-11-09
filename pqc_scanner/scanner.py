@@ -2,13 +2,13 @@
 
 import os
 import sys
+from fnmatch import fnmatch
 from pathlib import Path
 
 from .ast_scanner import scan_python
-from .cert_scanner import is_cert_file, scan_cert          # CHANGED: new import
+from .cert_scanner import is_cert_file, scan_cert
 from .config_scanner import is_config_file, scan_config
 from .models import Finding
-from .rules import load_rules
 
 # Which file types we look inside
 SOURCE_EXTENSIONS = {
@@ -26,9 +26,9 @@ SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"]
 
 def scan_file(path, rules, base):
     """Return a list of Findings for one file."""
-    rel_path = path.relative_to(base).as_posix()   # CHANGED: moved up to the top
+    rel_path = path.relative_to(base).as_posix()
 
-    # CHANGED: certificates are often binary, so they get their own scanner BEFORE we read text
+    # Certificates are often binary, so they get their own scanner BEFORE we read text
     if is_cert_file(path.name):
         return scan_cert(path, rel_path, rules)
 
@@ -74,17 +74,28 @@ def scan_file(path, rules, base):
     return findings
 
 
-def scan_folder(folder, rules):
-    """Walk through a folder and scan every source file inside it."""
+def is_excluded(name, exclude):
+    """Does this file or folder name match one of the --exclude patterns?"""
+    return any(fnmatch(name, pattern) for pattern in exclude)
+
+
+def scan_folder(folder, rules, exclude=()):
+    """Walk through a folder and scan every supported file inside it.
+
+    exclude: file or folder name patterns to skip, e.g. ["tests", "*.yaml"]
+    """
     base = Path(folder).resolve()
     findings = []
     files_scanned = 0
     for dirpath, dirnames, filenames in os.walk(base):
         # Editing dirnames in place tells os.walk to skip those folders
-        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+        dirnames[:] = [d for d in dirnames
+                       if d not in SKIP_DIRS and not is_excluded(d, exclude)]
         for name in filenames:
+            if is_excluded(name, exclude):
+                continue
             path = Path(dirpath) / name
-            if (path.suffix.lower() in SOURCE_EXTENSIONS                # CHANGED
+            if (path.suffix.lower() in SOURCE_EXTENSIONS
                     or is_config_file(name) or is_cert_file(name)):
                 findings.extend(scan_file(path, rules, base))
                 files_scanned += 1
@@ -93,23 +104,7 @@ def scan_folder(folder, rules):
     return findings, files_scanned
 
 
-def main():
-    folder = sys.argv[1] if len(sys.argv) > 1 else "."
-    rules = load_rules()
-    findings, files_scanned = scan_folder(folder, rules)
-
-    for f in findings:
-        print(f"[{f.severity.upper():8}] {f.algorithm:28} {f.file}:{f.line}  ({f.confidence})")
-        print(f"           {f.snippet}")
-        if f.detail:
-            print(f"           detail: {f.detail}")
-        print(f"           fix: {f.replacement}")
-        print()
-
-    vulnerable = [f for f in findings if not f.quantum_safe]
-    print(f"Scanned {files_scanned} files: {len(vulnerable)} quantum-vulnerable findings, "
-          f"{len(findings) - len(vulnerable)} quantum-safe findings.")
-
-
 if __name__ == "__main__":
-    main()
+    # The command-line part now lives in cli.py
+    from .cli import main
+    raise SystemExit(main())
