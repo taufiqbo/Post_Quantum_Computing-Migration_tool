@@ -17,6 +17,12 @@ algorithms:
       - Crypto.Cipher.PKCS1_OAEP
       - Crypto.Signature.pkcs1_15
       - rsa
+    config_tokens:
+      - '^(?:k|a)?RSA$'
+      - '(?:^|-)RSA(?:-|$)'
+      - '^ssh-rsa'
+      - '^rsa-sha2-'
+      - 'ssh_host_rsa_key'
     patterns:
       - regex: 'rsa\.generate_private_key|KeyPairGenerator\.getInstance\(\s*"RSA"|rsa\.GenerateKey\(|RSA_generate_key|generateKeyPair(?:Sync)?\(\s*[''"]rsa[''"]'
         confidence: high
@@ -35,6 +41,18 @@ algorithms:
       - cryptography.hazmat.primitives.asymmetric.x25519
       - Crypto.PublicKey.ECC
       - ecdsa
+    config_tokens:
+      - '^(?:k|a)?ECDHE?$'
+      - '^EECDH$'
+      - '(?:^|-)ECDHE?(?:-|$)'
+      - '(?:^|-)ECDSA(?:-|$)'
+      - '^ecdh-sha2-'
+      - '^ecdsa-sha2-'
+      - '^ssh-ed25519'
+      - '^curve25519-sha256'
+      - '^(?:X25519|x25519|X448)$'
+      - '^(?:prime256v1|secp256r1|secp384r1|secp521r1|P-256|P-384)$'
+      - 'ssh_host_(?:ecdsa|ed25519)_key'
     patterns:
       - regex: 'ec\.generate_private_key|KeyPairGenerator\.getInstance\(\s*"EC"|ecdsa\.GenerateKey\(|createECDH\('
         confidence: high
@@ -49,6 +67,12 @@ algorithms:
     replacement: Module-Lattice-Based Key-Encapsulation Mechanism (ML-KEM, FIPS 203).
     python_names:
       - cryptography.hazmat.primitives.asymmetric.dh
+    config_tokens:
+      - '^(?:k|a)?DHE?$'
+      - '^EDH$'
+      - '(?:^|-)DHE(?:-|$)'
+      - '^diffie-hellman-group'
+      - '^ffdhe\d+$'
     patterns:
       - regex: 'dh\.generate_parameters|createDiffieHellman\(|diffie-hellman-group'
         confidence: high
@@ -62,6 +86,9 @@ algorithms:
     python_names:
       - cryptography.hazmat.primitives.asymmetric.dsa
       - Crypto.PublicKey.DSA
+    config_tokens:
+      - '^ssh-dss'
+      - 'ssh_host_dsa_key'
     patterns:
       - regex: 'dsa\.generate_private_key|KeyPairGenerator\.getInstance\(\s*"DSA"|withDSA'
         confidence: high
@@ -76,6 +103,11 @@ algorithms:
       - hashlib.sha1
       - cryptography.hazmat.primitives.hashes.SHA1
       - Crypto.Hash.SHA1
+    config_tokens:
+      - '^hmac-sha1'
+      - '-sha1$'
+      - '-SHA$'
+      - '^sha1$'
     patterns:
       - regex: 'hashlib\.sha1\(|MessageDigest\.getInstance\(\s*"SHA-?1"|createHash\(\s*[''"]sha1'
         confidence: high
@@ -90,6 +122,10 @@ algorithms:
       - hashlib.md5
       - cryptography.hazmat.primitives.hashes.MD5
       - Crypto.Hash.MD5
+    config_tokens:
+      - '^hmac-md5'
+      - '^MD5$'
+      - '^md5$'
     patterns:
       - regex: 'hashlib\.md5\(|MessageDigest\.getInstance\(\s*"MD5"|createHash\(\s*[''"]md5'
         confidence: high
@@ -104,6 +140,10 @@ algorithms:
       - cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES
       - Crypto.Cipher.DES3
       - Crypto.Cipher.DES
+    config_tokens:
+      - '(?:^|-)DES-CBC3(?:-|$)'
+      - '^3des-cbc$'
+      - '(?:^|-)3DES(?:-|$)'
     patterns:
       - regex: 'TripleDES|DESede|des-ede3|DES3\.new\('
         confidence: high
@@ -114,6 +154,9 @@ algorithms:
     quantum_safe: true
     quantum_threat: None. This is the NIST post-quantum key exchange (FIPS 203).
     replacement: Already quantum-safe. Keep it.
+    config_tokens:
+      - '(?i)mlkem'
+      - '(?i)kyber'
     patterns:
       - regex: '\b(?:ML-?KEM\w*|X25519MLKEM768|Kyber\w*)\b'
         confidence: high

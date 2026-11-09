@@ -77,8 +77,9 @@ def test_skips_venv_folder(tmp_path):
 def test_samples_folder_gives_known_result():
     findings, files_scanned = scan_folder(SAMPLES, RULES)
     vulnerable = [f for f in findings if not f.quantum_safe]
-    assert files_scanned == 4
-    assert len(vulnerable) == 18
+    assert files_scanned == 7
+    assert len(vulnerable) == 33
     assert findings[0].severity == "critical"  # sorted: most severe first
 
+  
   

@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from .ast_scanner import scan_python
+from .config_scanner import is_config_file, scan_config   # NEW
 from .models import Finding
 from .rules import load_rules
 
@@ -32,6 +33,11 @@ def scan_file(path, rules, base):
         return findings
 
     rel_path = path.relative_to(base).as_posix()
+
+    # NEW: server config files get their own scanner
+    if is_config_file(path.name):
+        return scan_config(text, rel_path, rules)
+
     for line_number, line in enumerate(text.splitlines(), start=1):
         is_comment = line.strip().startswith(COMMENT_STARTS)
         for rule in rules:
@@ -73,7 +79,7 @@ def scan_folder(folder, rules):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for name in filenames:
             path = Path(dirpath) / name
-            if path.suffix.lower() in SOURCE_EXTENSIONS:
+            if path.suffix.lower() in SOURCE_EXTENSIONS or is_config_file(name):   # NEW
                 findings.extend(scan_file(path, rules, base))
                 files_scanned += 1
     # Most severe first, then by file name and line number

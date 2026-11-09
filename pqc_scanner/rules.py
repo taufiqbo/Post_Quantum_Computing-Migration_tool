@@ -26,7 +26,8 @@ class Rule:
     hndl: bool = False
     quantum_safe: bool = False
     patterns: list = field(default_factory=list)
-    python_names: list = field(default_factory=list)   # ⬅ NEW: used by the AST scanner
+    python_names: list = field(default_factory=list)   # used by the AST scanner
+    config_tokens: list = field(default_factory=list)  # used by the config scanner
 
 
 def load_rules(path=DEFAULT_RULES):
@@ -49,7 +50,8 @@ def load_rules(path=DEFAULT_RULES):
             hndl=entry.get("hndl", False),
             quantum_safe=entry.get("quantum_safe", False),
             patterns=patterns,
-            python_names=entry.get("python_names", []),   # ⬅ NEW
+            python_names=entry.get("python_names", []),
+            config_tokens=[re.compile(t) for t in entry.get("config_tokens", [])],
         ))
     return rules
 
