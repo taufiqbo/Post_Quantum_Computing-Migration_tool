@@ -28,6 +28,7 @@ class Rule:
     patterns: list = field(default_factory=list)
     python_names: list = field(default_factory=list)   # used by the AST scanner
     config_tokens: list = field(default_factory=list)  # used by the config scanner
+    cert_oids: list = field(default_factory=list)      # NEW: used by the certificate scanner
 
 
 def load_rules(path=DEFAULT_RULES):
@@ -52,6 +53,7 @@ def load_rules(path=DEFAULT_RULES):
             patterns=patterns,
             python_names=entry.get("python_names", []),
             config_tokens=[re.compile(t) for t in entry.get("config_tokens", [])],
+            cert_oids=entry.get("cert_oids", []),   # NEW
         ))
     return rules
 

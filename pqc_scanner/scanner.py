@@ -5,7 +5,8 @@ import sys
 from pathlib import Path
 
 from .ast_scanner import scan_python
-from .config_scanner import is_config_file, scan_config   # NEW
+from .cert_scanner import is_cert_file, scan_cert          # CHANGED: new import
+from .config_scanner import is_config_file, scan_config
 from .models import Finding
 from .rules import load_rules
 
@@ -25,6 +26,12 @@ SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"]
 
 def scan_file(path, rules, base):
     """Return a list of Findings for one file."""
+    rel_path = path.relative_to(base).as_posix()   # CHANGED: moved up to the top
+
+    # CHANGED: certificates are often binary, so they get their own scanner BEFORE we read text
+    if is_cert_file(path.name):
+        return scan_cert(path, rel_path, rules)
+
     findings = []
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -32,9 +39,7 @@ def scan_file(path, rules, base):
         print(f"  could not read {path}: {err}", file=sys.stderr)
         return findings
 
-    rel_path = path.relative_to(base).as_posix()
-
-    # NEW: server config files get their own scanner
+    # Server config files get their own scanner
     if is_config_file(path.name):
         return scan_config(text, rel_path, rules)
 
@@ -79,7 +84,8 @@ def scan_folder(folder, rules):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for name in filenames:
             path = Path(dirpath) / name
-            if path.suffix.lower() in SOURCE_EXTENSIONS or is_config_file(name):   # NEW
+            if (path.suffix.lower() in SOURCE_EXTENSIONS                # CHANGED
+                    or is_config_file(name) or is_cert_file(name)):
                 findings.extend(scan_file(path, rules, base))
                 files_scanned += 1
     # Most severe first, then by file name and line number
